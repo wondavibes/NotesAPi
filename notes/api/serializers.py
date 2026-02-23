@@ -1,6 +1,9 @@
 from rest_framework import serializers
-from ..models import Note
+from ..models import Note, NoteAccess
+from rest_framework.serializers import ModelSerializer
+from django.contrib.auth import get_user_model
 
+User = get_user_model()
 
 class NoteSerializer(serializers.ModelSerializer):
     class Meta:
@@ -20,3 +23,26 @@ class NoteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Title must be distinct from content")
 
         return data
+
+class NoteListSerializer(ModelSerializer):
+    preview = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Note
+        fields = ["id", "title", "preview", "visibility", "created_at"]
+
+    def get_preview(self, obj):
+        return obj.content[:100]
+
+class ShareItemSerializer(serializers.Serializer):
+    user_id = serializers.PrimaryKeyRelatedField(
+        queryset = User.objects.all(),
+        source = "user"
+    )
+    access_level = serializers.ChoiceField(
+        choices = NoteAccess.AccessLevel.choices,
+        default ="view"
+    )
+
+class ShareNoteSerializer(serializers.Serializer):
+    shares = ShareItemSerializer(many=True)

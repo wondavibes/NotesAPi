@@ -32,7 +32,7 @@ class NoteAccess(models.Model):
 
     note = models.ForeignKey(Note, on_delete=models.CASCADE, related_name="accesses")
     user = models.ForeignKey(NoteUser, on_delete=models.CASCADE, related_name="note_accesses")
-    access_level = models.CharField(max_length=10, choices=AccessLevel.choices)
+    access_level = models.CharField(max_length=10, choices=AccessLevel.choices, default="view")
 
     class Meta:
         unique_together = ("note", "user")

@@ -139,3 +139,5 @@ REST_FRAMEWORK["DEFAULT_FILTER_BACKENDS"] = [
 ]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+USERNAME_FIELD = 'email'

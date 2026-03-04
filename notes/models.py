@@ -17,8 +17,7 @@ class Note(models.Model):
     is_archived = models.BooleanField(default=False)
     visibility = models.CharField(
     max_length=20, choices=Visibility.choices, default=Visibility.PRIVATE)
-    """shared_with = models.ManyToManyField(
-            settings.AUTH_USER_MODEL, related_name="shared_notes", blank=True"""
+
 
 
     def __str__(self):

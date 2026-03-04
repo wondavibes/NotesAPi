@@ -5,7 +5,7 @@ from .serializers import NoteUserSerializer, RegisterSerializer, CustomTokenObta
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 class UserListCreateView(generics.ListCreateAPIView):
     queryset = NoteUser.objects.all()
@@ -15,6 +15,7 @@ class UserListCreateView(generics.ListCreateAPIView):
 class RegisterView(generics.CreateAPIView):
     queryset = NoteUser.objects.all()
     serializer_class = RegisterSerializer
+    permission_classes = [AllowAny]
 
 
 class Meview(APIView):
@@ -27,3 +28,4 @@ class Meview(APIView):
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+    permission_classes = [AllowAny]

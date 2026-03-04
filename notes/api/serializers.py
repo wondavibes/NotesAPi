@@ -8,7 +8,7 @@ User = get_user_model()
 class NoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Note
-        fields = ["id", "title", "content", "created_at", "visibility", "shared_with"]
+        fields = ["id", "title", "content", "created_at", "visibility"]
 
     def validate_title(self, value):
         if len(value) < 5:

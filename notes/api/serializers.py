@@ -32,7 +32,9 @@ class NoteListSerializer(ModelSerializer):
         fields = ["id", "title", "preview", "visibility", "created_at"]
 
     def get_preview(self, obj):
-        return obj.content[:100]
+        content = obj.content or ""
+        preview = content[:100]
+        return preview + "..." if len(content) > 100 else preview
 
 class ShareItemSerializer(serializers.Serializer):
     user_id = serializers.PrimaryKeyRelatedField(

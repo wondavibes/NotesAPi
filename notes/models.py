@@ -17,6 +17,15 @@ class Note(models.Model):
     is_archived = models.BooleanField(default=False)
     visibility = models.CharField(
     max_length=20, choices=Visibility.choices, default=Visibility.PRIVATE)
+    
+    category = models.ForeignKey(
+            "Category",
+            null=True,
+            blank=True,
+            on_delete=models.SET_NULL,
+            related_name="notes",
+        )
+    tags = models.ManyToManyField("Tag", blank=True, related_name="notes")
 
 
 
@@ -35,3 +44,32 @@ class NoteAccess(models.Model):
 
     class Meta:
         unique_together = ("note", "user")
+
+
+class Category(models.Model):
+        owner = models.ForeignKey(
+            settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="categories"
+        )
+        name = models.CharField(max_length=100)
+        created_at = models.DateTimeField(auto_now_add=True)
+
+        class Meta:
+            unique_together = (("owner", "name"),)
+
+        def __str__(self):
+            return f"{self.name}"
+
+
+class Tag(models.Model):
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="tags"
+    )
+    name = models.CharField(max_length=50)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = (("owner", "name"),)
+
+    def __str__(self):
+        return f"{self.name}"
+    

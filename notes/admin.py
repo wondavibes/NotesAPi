@@ -14,7 +14,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
-	list_display = ("id", "name", "owner")
+	list_display = ("id", "name")
 
 
 @admin.register(NoteAccess)

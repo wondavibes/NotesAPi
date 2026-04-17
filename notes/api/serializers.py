@@ -1,14 +1,22 @@
 from rest_framework import serializers
-from ..models import Note, NoteAccess
+from ..models import Note, NoteAccess, Tag, Category
 from rest_framework.serializers import ModelSerializer
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+
+class TagSerializer(serializers.Serializer):
+    class Meta:
+        model = Tag
+        fields = ["id", "name", "slug"]
+
 class NoteSerializer(serializers.ModelSerializer):
+    tags = TagSerializer(many=True, read_only=True)
     class Meta:
         model = Note
-        fields = ["id", "title", "content", "created_at", "visibility"]
+        fields = ["id", "title", "content", "tags", "created_at", "visibility"]
+        read_only_fields =['tags']
 
     def validate_title(self, value):
         if len(value) < 5:
@@ -48,3 +56,10 @@ class ShareItemSerializer(serializers.Serializer):
 
 class ShareNoteSerializer(serializers.Serializer):
     shares = ShareItemSerializer(many=True)
+
+
+
+class CategorySerializer(serializers.Serializer):
+    class Meta:
+        model = Category
+        fields = ["id", "name"]

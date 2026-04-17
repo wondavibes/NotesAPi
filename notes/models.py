@@ -1,7 +1,29 @@
 from django.conf import settings
 from django.db import models
 from accounts.models import NoteUser
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
+class Tag(models.Model):
+    name = models.CharField(max_length=50)
+    slug = models.SlugField(max_length=50, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tags')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('name', 'user')
+        ordering = ['name']
+
+    def __str__(self):
+        return f"#{self.name}"
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = self.name.lower().replace(' ', '-')
+        super().save(*args, **kwargs)
+        
 class Note(models.Model):
     class Visibility(models.TextChoices):
         PUBLIC = "public", "Public"
@@ -25,9 +47,7 @@ class Note(models.Model):
             on_delete=models.SET_NULL,
             related_name="notes",
         )
-    tags = models.ManyToManyField("Tag", blank=True, related_name="notes")
-
-
+    tags = models.ManyToManyField(Tag, related_name='notes', blank=True)
 
     def __str__(self):
         return self.title
@@ -60,16 +80,10 @@ class Category(models.Model):
             return f"{self.name}"
 
 
-class Tag(models.Model):
-    owner = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="tags"
-    )
-    name = models.CharField(max_length=50)
-    created_at = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        unique_together = (("owner", "name"),)
 
-    def __str__(self):
-        return f"{self.name}"
+
+
+
+
     

@@ -6,24 +6,15 @@ from django.dispatch import receiver
 from django.contrib.auth import get_user_model
 User = get_user_model()
 
+# models.py
+
 class Tag(models.Model):
-    name = models.CharField(max_length=50)
-    slug = models.SlugField(max_length=50, blank=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tags')
+    name = models.CharField(max_length=50, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        unique_together = ('name', 'user')
-        ordering = ['name']
-
     def __str__(self):
-        return f"#{self.name}"
+        return self.name
 
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = self.name.lower().replace(' ', '-')
-        super().save(*args, **kwargs)
-        
 class Note(models.Model):
     class Visibility(models.TextChoices):
         PUBLIC = "public", "Public"
@@ -78,12 +69,3 @@ class Category(models.Model):
 
         def __str__(self):
             return f"{self.name}"
-
-
-
-
-
-
-
-
-    

@@ -2,17 +2,21 @@ from rest_framework import serializers
 from ..models import Note, NoteAccess, Tag, Category
 from rest_framework.serializers import ModelSerializer
 from django.contrib.auth import get_user_model
-
+from .utils import extract_tags
 User = get_user_model()
 
 
-class TagSerializer(serializers.Serializer):
+""" class TagSerializer(serializers.Serializer):
     class Meta:
         model = Tag
-        fields = ["id", "name", "slug"]
+        fields = ["id", "name", "slug"] """
 
 class NoteSerializer(serializers.ModelSerializer):
-    tags = TagSerializer(many=True, read_only=True)
+    tags = serializers.SlugRelatedField(
+        many=True,
+        read_only=True,
+        slug_field="name"
+    )
     class Meta:
         model = Note
         fields = ["id", "title", "content", "tags", "created_at", "visibility"]
@@ -31,6 +35,35 @@ class NoteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Title must be distinct from content")
 
         return data
+
+    def create(self, validated_data):
+        content = validated_data.get("content", "")
+        tags = extract_tags(content)
+
+        note = Note.objects.create(**validated_data)
+
+        self._attach_tags(note, tags)
+        return note
+
+    def update(self, instance, validated_data):
+        content = validated_data.get("content", instance.content)
+        tags = extract_tags(content)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        instance.save()
+
+        instance.tags.clear()
+        self._attach_tags(instance, tags)
+
+        return instance
+
+    def _attach_tags(self, note, tag_names):
+        print("TAGS:", tag_names)
+        for name in tag_names:
+            tag, _ = Tag.objects.get_or_create(name=name)
+            note.tags.add(tag)
 
 class NoteListSerializer(ModelSerializer):
     preview = serializers.SerializerMethodField()

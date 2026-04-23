@@ -2,7 +2,7 @@ from rest_framework.viewsets import ModelViewSet
 from django.db import models
 from rest_framework.decorators import action
 from .serializers import NoteSerializer, ShareNoteSerializer
-from notes.models import Note, Tag, Category
+from notes.models import Note
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .permissions import NotePermission
 from rest_framework import status, filters, viewsets
@@ -25,21 +25,20 @@ class NoteViewSet(ModelViewSet):
         serializer.save(owner=self.request.user)
 
     def get_queryset(self): #type: ignore
-            user = self.request.user
+        user = self.request.user
 
-            queryset = Note.objects.all()
+        queryset = Note.objects.all()
 
-            if not user.is_authenticated:
-                # Anonymous users see only public notes
-                return queryset.filter(visibility="public").prefetch_related('tags')
+        if not user.is_authenticated:
+            # Anonymous users see only public notes
+            return queryset.filter(visibility="public").prefetch_related('tags')
 
-            # Authenticated users see:
-            # - Their own notes (as owner)
-            # - Notes shared with them (via NoteAccess)
-            return queryset.filter(
-                models.Q(owner=user) |
-                models.Q(shared_with=user) 
-            ).distinct().prefetch_related('tags')
+        # Authenticated users see:
+        # - Their own notes (as owner)
+        # - Notes shared with them (via NoteAccess)
+        return queryset.filter(
+            models.Q(owner=user) 
+        ).distinct().prefetch_related('tags')
     
     @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated, NotePermission])
     def share(self, request, pk=None):
@@ -81,5 +80,3 @@ class PublicNoteViewSet(viewsets.ReadOnlyModelViewSet):
         ).prefetch_related('tags').order_by('-created_at')
 
 
-class NoteTag(ModelViewSet):
-    ...

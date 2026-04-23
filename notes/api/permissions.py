@@ -30,8 +30,4 @@ class NotePermission(BasePermission):
         if request.method in ["PUT", "PATCH"]:
             return access and access.access_level == "edit"
 
-        # DELETE → owner only (already handled above)
-        if request.method == "DELETE":
-            return False
-
         return False

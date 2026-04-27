@@ -2,7 +2,7 @@ from rest_framework.viewsets import ModelViewSet
 from django.db import models
 from rest_framework.decorators import action
 from .serializers import NoteSerializer, ShareNoteSerializer
-from notes.models import Note
+from notes.models import Note, NoteAccess
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .permissions import NotePermission
 from rest_framework import status, filters, viewsets
@@ -37,11 +37,31 @@ class NoteViewSet(ModelViewSet):
         # - Their own notes (as owner)
         # - Notes shared with them (via NoteAccess)
         return queryset.filter(
-            models.Q(owner=user) 
+            models.Q(owner=user)|models.Q(accesses__user=user)
         ).distinct().prefetch_related('tags')
     
     @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated, NotePermission])
     def share(self, request, pk=None):
+        """
+        Share a note with other users.
+        
+        Testing in Hoppscotch:
+        - Method: POST
+        - URL: http://localhost:8000/api/notes/{note_id}/share/
+        - Headers: 
+            * Authorization: Bearer <your_jwt_token>
+            * Content-Type: application/json
+        - Body (JSON):
+            {
+                "shares": [
+                    {
+                        "user": <user_id>,
+                        "access_level": "view"
+                    }
+                ]
+            }
+        - Response: {"detail": "Note shared successfully."}
+        """
         note = self.get_object()
         if note.owner != request.user:
             return Response({"detail": "Only the owner can share this note."}, status=status.HTTP_403_FORBIDDEN)

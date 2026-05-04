@@ -16,3 +16,25 @@ def share_note(note, shares):
                 user=user,
                 defaults={"access_level": access_level},
             )
+
+def unshare_note(note, users):
+    """
+    Remove access for given users from a note.
+
+    Args:
+        note: Note instance
+        users: iterable of User instances
+
+    Returns:
+        int: number of removed access entries
+    """
+
+    deleted_count, _ = NoteAccess.objects.filter(
+        note=note,
+        user__in=users
+    ).delete()
+
+    return deleted_count
+
+def list_shared_notes(user):
+    ...

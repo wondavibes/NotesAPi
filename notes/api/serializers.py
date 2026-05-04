@@ -90,7 +90,19 @@ class ShareItemSerializer(serializers.Serializer):
 class ShareNoteSerializer(serializers.Serializer):
     shares = ShareItemSerializer(many=True)
 
+class UnshareItemSerializer(serializers.Serializer):
+    user_id = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        source="user"
+    )
 
+class UnshareNoteSerializer(serializers.Serializer):
+    shares = UnshareItemSerializer(many=True)
+
+    def validate(self, data): #type:ignore
+        if not data.get("shares"):
+            raise serializers.ValidationError("No users provided.")
+        return data
 
 class CategorySerializer(serializers.Serializer):
     class Meta:

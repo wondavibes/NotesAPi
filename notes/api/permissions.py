@@ -1,9 +1,9 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
-from notes.models import NoteAccess
+from notes.models import NoteAccess, Note
 
 class NotePermission(BasePermission):
-
-    def has_object_permission(self, request, view, obj): # type: ignore
+    """permission settings for Note model"""
+    def has_object_permission(self, request, view, obj: Note): # type: ignore
         user = request.user
 
         if user.is_staff:

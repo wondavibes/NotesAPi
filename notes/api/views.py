@@ -1,13 +1,13 @@
 from rest_framework.viewsets import ModelViewSet
-from django.db import models
+from django.db.models import Q
 from rest_framework.decorators import action
-from .serializers import NoteSerializer, ShareNoteSerializer
+from .serializers import NoteSerializer, ShareNoteSerializer, UnshareNoteSerializer
 from notes.models import Note, NoteAccess
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .permissions import NotePermission
 from rest_framework import status, filters, viewsets
 from rest_framework.response import Response
-from ..services import share_note
+from ..services import share_note, unshare_note
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import NoteFilter
 
@@ -37,31 +37,12 @@ class NoteViewSet(ModelViewSet):
         # - Their own notes (as owner)
         # - Notes shared with them (via NoteAccess)
         return queryset.filter(
-            models.Q(owner=user)|models.Q(accesses__user=user)
+            Q(owner=user)|Q(accesses__user=user)
         ).distinct().prefetch_related('tags')
     
     @action(detail=True, methods=["post"], permission_classes=[IsAuthenticated, NotePermission])
     def share(self, request, pk=None):
-        """
-        Share a note with other users.
-        
-        Testing in Hoppscotch:
-        - Method: POST
-        - URL: http://localhost:8000/api/notes/{note_id}/share/
-        - Headers: 
-            * Authorization: Bearer <your_jwt_token>
-            * Content-Type: application/json
-        - Body (JSON):
-            {
-                "shares": [
-                    {
-                        "user": <user_id>,
-                        "access_level": "view"
-                    }
-                ]
-            }
-        - Response: {"detail": "Note shared successfully."}
-        """
+        """Share a note with other users."""
         note = self.get_object()
         if note.owner != request.user:
             return Response({"detail": "Only the owner can share this note."}, status=status.HTTP_403_FORBIDDEN)
@@ -71,7 +52,32 @@ class NoteViewSet(ModelViewSet):
 
         share_note(note=note, shares=serializer.validated_data["shares"])
         return Response({"detail": "Note shared successfully."}, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=["post"], url_path="unshare")
+    def unshare(self, request, pk=None):
+        note = self.get_object()
 
+        # Only owner can unshare
+        if note.owner != request.user:
+            return Response(
+                {"detail": "Only the owner can unshare this note."},
+                status=403
+            )
+
+        serializer = UnshareNoteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        users = [item["user"] for item in serializer.validated_data["shares"]]
+
+        # Delete NoteAccess entries
+        removed = unshare_note(note, users)
+        return Response(
+            {
+                "detail": "Unshare completed.",
+                "removed": removed
+            },
+            status=200
+        )
 
 # ==================== PUBLIC NOTES VIEWSET ====================
 # Separate viewset for public notes with AllowAny permissions

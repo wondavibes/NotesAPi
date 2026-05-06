@@ -79,6 +79,20 @@ class NoteViewSet(ModelViewSet):
             status=200
         )
 
+
+    def shared_with_me(self, request):
+        """List notes shared with the authenticated user."""
+        user = request.user
+        if not user.is_authenticated:
+            return Response({"detail": "Authentication required."}, status=401)
+
+        shared_notes = Note.objects.filter(
+            accesses__user=user
+        ).distinct().prefetch_related('tags')
+
+        serializer = NoteSerializer(shared_notes, many=True)
+        return Response(serializer.data, status=200)
+
 # ==================== PUBLIC NOTES VIEWSET ====================
 # Separate viewset for public notes with AllowAny permissions
 # Usage: Register this in urls.py as router.register(r'public', PublicNoteViewSet)
